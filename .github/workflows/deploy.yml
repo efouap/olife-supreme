@@ -1,10 +1,9 @@
+
 name: O LIFE Supreme — Full Auto Deploy
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'public/**'
   workflow_dispatch:
 
 permissions:
@@ -36,14 +35,14 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public/
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
 
       - name: Print live URL
-        run: echo "✅ GitHub Pages live → ${{ steps.deploy.outputs.page_url }}"
+        run: echo "✅ Live → ${{ steps.deploy.outputs.page_url }}"
 
   deploy-worker:
     name: Deploy → Cloudflare Worker
@@ -60,7 +59,6 @@ jobs:
           API_TOKEN="${{ secrets.CF_API_TOKEN }}"
           PAGES_URL="${{ needs.deploy-pages.outputs.page_url }}"
           PAGES_URL="${PAGES_URL%/}"
-          WORKER_NAME="olife-supreme"
 
           cat > worker.js << 'WORKER'
           const ORIGIN = "PAGES_URL_PLACEHOLDER";
@@ -100,9 +98,9 @@ jobs:
           sed -i "s|PAGES_URL_PLACEHOLDER|${PAGES_URL}|g" worker.js
 
           curl -s -X PUT \
-            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}" \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/olife-supreme" \
             -H "Authorization: Bearer ${API_TOKEN}" \
             -H "Content-Type: application/javascript+module" \
             --data-binary @worker.js
 
-          echo "✅ Done — GitHub Pages: ${PAGES_URL}"
+          echo "✅ Done — Live at: ${PAGES_URL}"
